@@ -30,7 +30,7 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 
 # 创建保存图像的文件夹
-PLOT_DIR = "plots"
+PLOT_DIR = ".\Plots"
 os.makedirs(PLOT_DIR, exist_ok=True)
 
 def load_data(data_dir, grasp_folders):
@@ -247,7 +247,7 @@ def main():
     # 1. 设置数据路径和抓握类别
     # 假设 test1.py 与 ProcessedData 位于同级目录
     # 如果不在同级，请根据实际情况修改 data_dir 的相对或绝对路径
-    data_dir = "AML_LAB_Project\ProcessedData"  # 根据你的实际情况改动
+    data_dir = ".\ProcessedData"  # 根据你的实际情况改动
 
     # 8 类抓握姿势文件夹（需与实际文件夹名保持一致，大小写一致）
     grasp_folders = [
