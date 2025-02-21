@@ -5,6 +5,7 @@
 
 !/Code/
 !dataset/
+.venv
 
 # User-specific files
 *.rsuser
