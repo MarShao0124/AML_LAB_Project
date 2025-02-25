@@ -46,7 +46,7 @@ def combine_data(output_file, labels_file):
     
 
 
-def find_stationary(df, window_size=20, std_threshold=1,stable_window_count=5):
+def find_stationary(df, window_size=20, std_threshold=1,stable_window_count=5,keep_last=10):
     """
     Finds the first stationary time point for each flex sensor signal using the ADF test.
     Returns a list with the stationary times and corresponding sensor values.
@@ -87,7 +87,12 @@ def find_stationary(df, window_size=20, std_threshold=1,stable_window_count=5):
     
     overall_start = max(start_indices)
     
-    return df.iloc[overall_start:].values
+
+    np.random.seed(42)
+    if len(df) - overall_start < keep_last:
+        return df.iloc[overall_start:].values
+    else:
+        return df.iloc[overall_start:].sample(n=keep_last).values
 
 def extract_stable_dataset(output_file,dict_file):
     data_folder = 'ProcessedData'
@@ -158,14 +163,13 @@ def plot_grasp(path,stationary_point=True):
 
 extract_stable_dataset('Stable_dataset.csv', 'grasp_labels_stable.csv')
 
-combine_data('Total_dataset.csv', 'grasp_labels_total.csv')
+#combine_data('Total_dataset.csv', 'grasp_labels_total.csv')
 
-"""
+
 # Plot the data of a single grasp type
 data_folder = 'ProcessedData'
-Grasp_type = 'Ventral'
-Object = 'stick'
+Grasp_type = 'Precision_sphere'
+Object = 'tennisball'
 for file in os.listdir(os.path.join(data_folder, Grasp_type, Object)):
     path = os.path.join(data_folder, Grasp_type, Object, file)
     plot_grasp(path)
-"""
