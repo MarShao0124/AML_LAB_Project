@@ -7,6 +7,8 @@ import pickle
 
 # load data
 (X_train, y_train), (X_test, y_test) = load_data('Stable_dataset.csv', label_columns='Labels', test_size=0.4)
+X_train = X_train[:,1:]
+X_test = X_test[:,1:]
 
 classifier = SVC(kernel='linear', random_state=42).fit(X_train, y_train)
 y_pred = classifier.predict(X_test)
