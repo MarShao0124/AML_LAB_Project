@@ -44,6 +44,53 @@ def combine_data(output_file, labels_file):
     grasp_labels_df = pd.DataFrame(list(grasp_labels.items()), columns=['Grasp Type', 'Label'])
     grasp_labels_df.to_csv(labels_file, index=False)
     
+def find_stationary_diff(df, gradient_threshold=0.05, stable_window_count=5, keep_last=10):
+    """
+    Finds the first stationary time point for each flex sensor signal using rolling gradient.
+    Returns a list with the stationary times and corresponding sensor values.
+    """
+
+    sensor_cols = df.columns[1:]  # Exclude the time column
+    start_indices = []
+    window_size = int(df.shape[0]/4)
+
+    for col in sensor_cols:
+        # Compute the rolling gradient (mean of gradient over a window)
+        gradient = np.gradient(df[col])
+        rolling_gradient = pd.Series(gradient).rolling(window=window_size, center=True).mean()
+
+        # Identify where the rolling gradient is close to zero (flat region)
+        flat_regions = rolling_gradient.abs() < gradient_threshold
+
+        # Find the first stable window
+        consecutive_count = 0
+        start_idx = -1
+        for i in range(len(flat_regions)):
+            if flat_regions.iloc[i]:  # If gradient is near zero
+                consecutive_count += 1
+                if consecutive_count >= stable_window_count:
+                    start_idx = i - stable_window_count + 1
+                    break
+            else:
+                consecutive_count = 0
+
+        if start_idx == -1:
+            print(f"Sensor {col} does not have a stable window")
+        else:
+            start_indices.append(start_idx)
+
+    # Find the latest start index
+    if len(start_indices) == 0:
+        print("No stable window found for any sensor")
+        return np.array([])
+
+    overall_start = max(start_indices)
+
+    np.random.seed(42)
+    if len(df) - overall_start < keep_last:
+        return df.iloc[overall_start:].values
+    else:
+        return df.iloc[overall_start:].sample(n=keep_last).values
 
 
 def find_stationary(df, window_size=20, std_threshold=1,stable_window_count=5,keep_last=10):
@@ -114,7 +161,7 @@ def extract_stable_dataset(output_file,dict_file):
             for file in os.listdir(object_path): #different trials
                 path = os.path.join(object_path, file)
                 df = pd.read_csv(path, names=columns, index_col=False, usecols=[0,1,2,3,4,5,6])
-                stationary_data = find_stationary(df)
+                stationary_data = find_stationary_diff(df, gradient_threshold=0.2, stable_window_count=5, keep_last=10)
                 if len(stationary_data) == 0:
                     print(f"No stationary data found for {path}")
                 else:
@@ -148,9 +195,11 @@ def plot_grasp(path,stationary_point=True):
     plt.plot(df['Time in ms'], df['flex6'], label='flex6')
 
     if stationary_point:
-        stationary_data = find_stationary(df)
-        for i in range(1, 7):
-            plt.scatter(stationary_data[:, 0], stationary_data[:, i], c='r', s=10)
+        #stationary_data = find_stationary(df, window_size=20, std_threshold=0.7, stable_window_count=5, keep_last=10)
+        stationary_data = find_stationary_diff(df, gradient_threshold=0.2, stable_window_count=5, keep_last=10)
+        if stationary_data.ndim == 2 and stationary_data.shape[0] > 0:
+            for i in range(1, 7):
+                plt.scatter(stationary_data[:, 0], stationary_data[:, i], c='r', s=10)
 
     plt.xlabel('Time in ms')
     plt.ylabel('Flex Sensor Value')
@@ -161,15 +210,15 @@ def plot_grasp(path,stationary_point=True):
     plt.show()
 
 
-extract_stable_dataset('Stable_dataset.csv', 'grasp_labels_stable.csv')
+#extract_stable_dataset('Stable_dataset.csv', 'grasp_labels_stable.csv')
 
 #combine_data('Total_dataset.csv', 'grasp_labels_total.csv')
 
 
 # Plot the data of a single grasp type
 data_folder = 'ProcessedData'
-Grasp_type = 'Precision_sphere'
-Object = 'tennisball'
+Grasp_type = 'Ventral'
+Object = 'stick'
 for file in os.listdir(os.path.join(data_folder, Grasp_type, Object)):
     path = os.path.join(data_folder, Grasp_type, Object, file)
     plot_grasp(path)
