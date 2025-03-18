@@ -18,7 +18,7 @@ import random
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, f1_score
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv1D, MaxPooling1D, Bidirectional, LSTM, Flatten, Dense, Dropout
@@ -28,15 +28,16 @@ from tensorflow.keras.callbacks import EarlyStopping
 # Paths and hyperparameters
 OUTPUT_DIR = "./CNNbiLSTM"
 MODEL_PATH = os.path.join(OUTPUT_DIR, "cnn_lstm_model.pkl")
+LABEL_PATH = "grasp_labels_stable.csv"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 WINDOW_SIZE = 10
 STEP_SIZE = 5
 NUM_CLASSES = 8
-BATCH_SIZE = 32
+BATCH_SIZE = 16
 EPOCHS = 100
 LEARNING_RATE = 1e-3
-SEED = 42  # Fixed seed for reproducibility
+SEED = 42  
 
 # ✅ **Set random seeds for reproducibility**
 def set_random_seeds(seed=SEED):
@@ -50,10 +51,9 @@ set_random_seeds()
 
 def sliding_window_subsequences(data, window_size=WINDOW_SIZE, step_size=STEP_SIZE):
     """Apply a sliding window to generate subsequences from time-series data."""
-    subseqs = [data[start:start + window_size] for start in range(0, len(data) - window_size + 1, step_size)]
-    return subseqs
+    return [data[start:start + window_size] for start in range(0, len(data) - window_size + 1, step_size)]
 
-def load_dataset(data_dir="./ProcessedData"):
+def load_dataset(data_dir="ProcessedData_overall"):
     """Load dataset, apply sliding window, and split into train/val/test sets."""
     grasp_folders = [
         "Adduction_Grip", "Fixed_hook", "Large_diameter", "Parallel_extension",
@@ -73,7 +73,7 @@ def load_dataset(data_dir="./ProcessedData"):
             for file_path in csv_files:
                 df = pd.read_csv(file_path, header=None)
                 df.columns = ['time', 'flex1', 'flex2', 'flex3', 'flex4', 'flex5', 'flex6']
-                data = df.iloc[:, 1:].values  # Extract sensor readings
+                data = df.iloc[:, 1:].values 
 
                 subseqs = sliding_window_subsequences(data, WINDOW_SIZE, STEP_SIZE)
                 X_list.extend(subseqs)
@@ -84,7 +84,6 @@ def load_dataset(data_dir="./ProcessedData"):
     y_enc = le.fit_transform(y)
     y_onehot = to_categorical(y_enc, num_classes=NUM_CLASSES)
 
-    # Split dataset: 80% train, 10% val, 10% test
     X_trainval, X_test, y_trainval, y_test = train_test_split(
         X, y_onehot, test_size=0.1, random_state=SEED, stratify=y_enc)
     X_train, X_val, y_train, y_val = train_test_split(
@@ -121,64 +120,77 @@ def save_model_as_pkl(model, filename):
         pickle.dump(model, file)
     print(f"Model saved as {filename}")
 
-def plot_classification_report(report, labels, save_path):
-    """Generate a classification report plot and save it."""
-    report_df = pd.DataFrame(report).transpose().iloc[:-3, :]
-    report_df['Accuracy (%)'] = (report_df['recall'] * 100).round(2)
+def plot_confusion_matrix(y_true, y_pred, label_path=LABEL_PATH, normalize=True, save_path="confusion_matrix.png"):
+    """Plot and save the confusion matrix."""
+    cm = confusion_matrix(y_true, y_pred)
+    
+    labels = pd.read_csv(label_path)
+    labels = labels.sort_values('Label')  
+    grasp_names = labels['Grasp Type'].tolist()
 
-    fig, ax = plt.subplots(figsize=(10, len(labels) * 0.6 + 2))
-    ax.axis('off')
-    table = ax.table(cellText=report_df.round(2).values,
-                     colLabels=['Precision', 'Recall', 'F1-Score', 'Support', 'Accuracy (%)'],
-                     rowLabels=labels, loc='center', cellLoc='center')
-    table.auto_set_font_size(False)
-    table.set_fontsize(10)
-    table.scale(1.2, 1.2)
-    ax.set_title("Classification Report", fontsize=14, weight='bold')
+    accuracy = accuracy_score(y_true, y_pred)
+    f1 = f1_score(y_true, y_pred, average='weighted')
 
-    plt.savefig(save_path, bbox_inches='tight')
-    print(f"Saved classification report to {save_path}")
-    plt.close()
+    print(f'Accuracy: {accuracy:.4f}, F1 Score: {f1:.4f}')
 
-def plot_confusion_matrix(cm, labels, save_path):
-    """Generate a confusion matrix plot and save it."""
-    plt.figure(figsize=(8, 6))
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
-                xticklabels=labels, yticklabels=labels)
-    plt.xlabel("Predicted")
-    plt.ylabel("True")
-    plt.title("Confusion Matrix")
-    plt.savefig(save_path, bbox_inches='tight')
-    print(f"Saved confusion matrix to {save_path}")
-    plt.close()
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1, keepdims=True)
+
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(cm, annot=True, fmt=".2f" if normalize else "d", cmap="Blues",
+                xticklabels=grasp_names, yticklabels=grasp_names)
+    plt.xticks(rotation=45, ha="right", fontsize=8)
+    plt.yticks(rotation=0, fontsize=8)
+    plt.tight_layout()
+
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    plt.title(f'Confusion Matrix\nAccuracy: {accuracy:.4f}, F1 Score: {f1:.4f}')
+    plt.savefig(save_path, dpi=300)
+    print(f"Confusion Matrix saved to {save_path}")
+    plt.show()
+
+def generate_classification_report(y_true, y_pred, save_csv_path="classification_report.csv", save_img_path="classification_report.png"):
+    """Generate and save the classification report as CSV and image."""
+    labels = pd.read_csv(LABEL_PATH)
+    labels = labels.sort_values('Label')  
+    grasp_names = labels['Grasp Type'].tolist()
+
+    report_dict = classification_report(y_true, y_pred, target_names=grasp_names, output_dict=True)
+    
+    df_report = pd.DataFrame(report_dict).T
+    df_report.to_csv(save_csv_path, index=True)
+    print(f"Classification report saved to {save_csv_path}")
+
+    plt.figure(figsize=(10, 6))
+    df_report = df_report.drop(columns=['support'], errors='ignore')
+
+    sns.heatmap(df_report.iloc[:-1, :].astype(float), annot=True, cmap="Blues", fmt=".2f")
+    plt.title("Classification Report")
+    plt.yticks(rotation=0)
+    plt.tight_layout()
+
+    plt.savefig(save_img_path, dpi=300)
+    print(f"Classification report image saved to {save_img_path}")
+    plt.show()
 
 def main():
-    """Main function to train, evaluate, and save the CNN + BiLSTM model."""
-    set_random_seeds()  # Ensure reproducibility
-
     X_train, y_train, X_val, y_val, X_test, y_test, label_encoder = load_dataset()
     model = build_cnn_lstm_model()
 
-    early_stop = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+    early_stop = EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True)
     model.fit(X_train, y_train,
               validation_data=(X_val, y_val),
               epochs=EPOCHS,
               batch_size=BATCH_SIZE,
               callbacks=[early_stop])
 
-    test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
-    print(f"Test accuracy = {test_acc:.4f}")
-
     y_pred = model.predict(X_test).argmax(axis=1)
     y_true = y_test.argmax(axis=1)
-    report = classification_report(y_true, y_pred, target_names=label_encoder.classes_, output_dict=True)
-    cm = confusion_matrix(y_true, y_pred)
 
-    # Save classification report and confusion matrix
-    plot_classification_report(report, label_encoder.classes_, os.path.join(OUTPUT_DIR, "classification_report.png"))
-    plot_confusion_matrix(cm, label_encoder.classes_, os.path.join(OUTPUT_DIR, "confusion_matrix.png"))
+    plot_confusion_matrix(y_true, y_pred)
+    generate_classification_report(y_true, y_pred)
 
-    # Save model as .pkl file
     save_model_as_pkl(model, MODEL_PATH)
 
 if __name__ == "__main__":

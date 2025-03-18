@@ -21,7 +21,7 @@ classifier = SVC(kernel='linear', random_state=42, probability=True).fit(X_train
 y_pred = classifier.predict(X_test)
 
 # Save the model so it can be reused in real-time prediction
-with open('Model/svm_model.pkl', 'wb') as f:
+with open('Model/new_svm_model.pkl', 'wb') as f:
     pickle.dump(classifier, f)
     
 # evaluate

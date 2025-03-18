@@ -10,7 +10,7 @@ def combine_data(output_file, labels_file):
     The function also labels all the data and generates a dictionary of the labels in the form of {grasp_type: label}
     """
 
-    data_folder = 'ProcessedData'
+    data_folder = 'ProcessedData_overall'
     columns = ['Time in ms', 'flex1', 'flex2', 'flex3', 'flex4', 'flex5', 'flex6']
     
     combined_dataset = pd.DataFrame(columns=columns)
@@ -142,7 +142,7 @@ def find_stationary(df, window_size=20, std_threshold=1,stable_window_count=5,ke
         return df.iloc[overall_start:].sample(n=keep_last).values
 
 def extract_stable_dataset(output_file,dict_file):
-    data_folder = 'ProcessedData'
+    data_folder = 'ProcessedData_overall'
     columns = ['Time in ms', 'flex1', 'flex2', 'flex3', 'flex4', 'flex5', 'flex6']
     
     combined_dataset = pd.DataFrame(columns=columns)
@@ -157,6 +157,7 @@ def extract_stable_dataset(output_file,dict_file):
 
         for file_object in os.listdir(grasp_type_path): #different objects
             object_path = os.path.join(grasp_type_path, file_object)
+            print(f"Processing {object_path}")
 
             for file in os.listdir(object_path): #different trials
                 path = os.path.join(object_path, file)
@@ -210,15 +211,15 @@ def plot_grasp(path,stationary_point=True):
     plt.show()
 
 
-#extract_stable_dataset('Stable_dataset.csv', 'grasp_labels_stable.csv')
+extract_stable_dataset('Stable_dataset.csv', 'grasp_labels_stable.csv')
 
-#combine_data('Total_dataset.csv', 'grasp_labels_total.csv')
+combine_data('Total_dataset.csv', 'grasp_labels_total.csv')
 
 
 # Plot the data of a single grasp type
-data_folder = 'ProcessedData'
-Grasp_type = 'Ventral'
-Object = 'stick'
-for file in os.listdir(os.path.join(data_folder, Grasp_type, Object)):
-    path = os.path.join(data_folder, Grasp_type, Object, file)
-    plot_grasp(path)
+# data_folder = 'ProcessedData_overall'
+# Grasp_type = 'Writing_Tripod'
+# Object = 'stick2'
+# for file in os.listdir(os.path.join(data_folder, Grasp_type, Object)):
+#     path = os.path.join(data_folder, Grasp_type, Object, file)
+#     plot_grasp(path)
