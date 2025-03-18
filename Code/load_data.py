@@ -10,7 +10,7 @@ def load_data(
     test_size=0.2,
     task='classification',
     seed=42,
-    normalize=True,
+    normalize=False,
     shuffle=True
 ):
     """

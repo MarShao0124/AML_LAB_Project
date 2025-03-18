@@ -2,7 +2,6 @@ from load_data import load_data
 from plot_confusion import plot_confusion
 from sklearn.svm import SVC
 import numpy as np
-import matplotlib.pyplot as plt
 import pickle
 
 # Load data (assumed to be already normalized in load_data)
@@ -23,9 +22,6 @@ y_pred = classifier.predict(X_test)
 # Save the model so it can be reused in real-time prediction
 with open('Model/svm_model.pkl', 'wb') as f:
     pickle.dump(classifier, f)
-    
-# evaluate
-plot_confusion(y_test, y_pred)
 
-
-
+# Evaluate the classifier (uncomment to display the confusion matrix)
+# plot_confusion(y_test, y_pred)
