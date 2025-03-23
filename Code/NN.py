@@ -1,4 +1,5 @@
 from load_data import load_data
+from plot_confusion import plot_history, plot_confusion
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -19,33 +20,6 @@ def NN(dropout_rate=0.2, input_dim=6, num_layers=3, initial_neurons=64):
     model.add(Dense(8, activation='softmax'))
     return model
 
-def plot_history(history):
-    plt.figure(figsize=(12, 4))
-
-    # Plot accuracy
-    plt.subplot(1, 2, 1)
-    plt.plot(history.history['accuracy'], label='accuracy')
-    plt.plot(history.history['val_accuracy'], label='val_accuracy')
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.ylim([0, 1])
-    plt.legend(loc='lower right')
-    plt.title('Model Accuracy')
-
-    # Plot loss
-    plt.subplot(1, 2, 2)
-    plt.plot(history.history['loss'], label='loss')
-    plt.plot(history.history['val_loss'], label='val_loss')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.legend(loc='upper right')
-    plt.title('Model Loss')
-
-    plt.show()
-
-
-
-
 # Main code
 # Load data
 (X_train_1, y_train_1), (X_test_1, y_test_1) = load_data('Data/Stable_1.csv', label_columns='Labels', test_size=0.2)
@@ -60,32 +34,22 @@ y_test = y_test_1
 X_train = X_train[:, 1:]
 X_test = X_test[:, 1:]
 
-# Load grasp labels
-labels_df = pd.read_csv('Data/Stable_label_1.csv')
-label_mapping = dict(zip(labels_df['Label'], labels_df['Grasp Type']))
-# Map numerical labels to text labels
-y_train_text = [label_mapping[label] for label in y_train]
-y_test_text = [label_mapping[label] for label in y_test]
-
 y_train = to_categorical(y_train)
 y_test = to_categorical(y_test)
 y_train_2 = to_categorical(y_train_2)
 
 
 # NN
-model = NN(dropout_rate=0, input_dim=X_train.shape[1], num_layers=3, initial_neurons=64)
+model = NN(dropout_rate=0.5, input_dim=X_train.shape[1], num_layers=5, initial_neurons=256)
 model.compile(loss='binary_crossentropy', optimizer=Adam(0.001), metrics=['accuracy'])
-history = model.fit(X_train, y_train, epochs=100, batch_size=32, validation_data=(X_test, y_test))
+history = model.fit(X_train, y_train, epochs=500, batch_size=32, validation_data=(X_test, y_test))
 
-
-score = model.evaluate(X_train_2[:,1:], y_train_2)
-print(f'Test loss: {score[0]}')
-print(f'Test accuracy: {score[1]}')
-
-print(X_train_2.shape)
-print(X_train.shape)
-
+# Plot confusion matrix on unseen data
+plot_confusion(np.argmax(y_train_2, axis=1), np.argmax(model.predict(X_train_2[:,1:]), axis=1))
 
 # Plot history
 plot_history(history)
 
+#save model
+model.save('Model/nn_model.h5')
+print("Model saved")
