@@ -141,7 +141,7 @@ def find_stationary(df, window_size=20, std_threshold=1,stable_window_count=5,ke
     else:
         return df.iloc[overall_start:].sample(n=keep_last).values
 
-def extract_stable_dataset(output_file,dict_file):
+def extract_stable_dataset(output_file,dict_file,person,keep_last=1):
     data_folder = 'ProcessedData_overall'
     columns = ['Time in ms', 'flex1', 'flex2', 'flex3', 'flex4', 'flex5', 'flex6']
     
@@ -156,19 +156,23 @@ def extract_stable_dataset(output_file,dict_file):
         grasp_labels[file_name] = i
 
         for file_object in os.listdir(grasp_type_path): #different objects
-            object_path = os.path.join(grasp_type_path, file_object)
-            print(f"Processing {object_path}")
-
-            for file in os.listdir(object_path): #different trials
-                path = os.path.join(object_path, file)
-                df = pd.read_csv(path, names=columns, index_col=False, usecols=[0,1,2,3,4,5,6])
-                stationary_data = find_stationary_diff(df, gradient_threshold=0.2, stable_window_count=5, keep_last=10)
-                if len(stationary_data) == 0:
-                    print(f"No stationary data found for {path}")
-                else:
-                    stationary_data = pd.DataFrame(stationary_data, columns=columns)
-                    stationary_data["Labels"] = i
-                    combined_dataset = pd.concat([combined_dataset, stationary_data], ignore_index=True)
+            if file_object[-1] == str(person): #only consider the data of one person
+                object_path = os.path.join(grasp_type_path, file_object)
+                print(f"Processing {object_path}")
+            
+                for file in os.listdir(object_path): #different trials
+                    path = os.path.join(object_path, file)
+                    df = pd.read_csv(path, names=columns, index_col=False, usecols=[0,1,2,3,4,5,6])
+                    stationary_data = find_stationary_diff(df, gradient_threshold=0.2, stable_window_count=5, keep_last=keep_last)
+                    if len(stationary_data) == 0:
+                        print(f"No stationary data found for {path}")
+                    else:
+                        stationary_data = pd.DataFrame(stationary_data, columns=columns)
+                        stationary_data["Labels"] = i
+                        combined_dataset = pd.concat([combined_dataset, stationary_data], ignore_index=True)
+            
+            else:
+                continue
         i+=1
 
     combined_dataset.to_csv(output_file, index=False)
@@ -211,9 +215,10 @@ def plot_grasp(path,stationary_point=True):
     plt.show()
 
 
-extract_stable_dataset('Stable_dataset.csv', 'grasp_labels_stable.csv')
+extract_stable_dataset('Data/Stable_1.csv', 'Data/Stable_label_1.csv', 1, keep_last=1)
+extract_stable_dataset('Data/Stable_2.csv', 'Data/Stable_label_2.csv', 2, keep_last=1)
 
-combine_data('Total_dataset.csv', 'grasp_labels_total.csv')
+#combine_data('Total_dataset.csv', 'grasp_labels_total.csv')
 
 
 # Plot the data of a single grasp type

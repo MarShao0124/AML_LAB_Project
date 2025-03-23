@@ -40,3 +40,28 @@ def plot_confusion(y_true, y_pred, label_path='grasp_labels_stable.csv'):
     plt.yticks(np.arange(len(labels)), grasp_names)
     
     plt.show()
+
+
+def plot_history(history):
+    plt.figure(figsize=(12, 4))
+
+    # Plot accuracy
+    plt.subplot(1, 2, 1)
+    plt.plot(history.history['accuracy'], label='accuracy')
+    plt.plot(history.history['val_accuracy'], label='val_accuracy')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.ylim([0, 1])
+    plt.legend(loc='lower right')
+    plt.title('Model Accuracy')
+
+    # Plot loss
+    plt.subplot(1, 2, 2)
+    plt.plot(history.history['loss'], label='loss')
+    plt.plot(history.history['val_loss'], label='val_loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend(loc='upper right')
+    plt.title('Model Loss')
+
+    plt.show()

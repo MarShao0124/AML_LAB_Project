@@ -60,18 +60,21 @@ def load_data(
             raise ValueError(f"无效任务类型: {task}，请选择 'classification' 或 'regression'")
             
         # 数据集分割
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y,
-            test_size=test_size,
-            random_state=seed,
-            shuffle=shuffle
-        )
-        
-        # 转换为float32类型
-        X_train = X_train.astype('float32')
-        X_test = X_test.astype('float32')
-        
-        return (X_train, y_train), (X_test, y_test)
+        if test_size == 0:
+            return (X, y), (None, None)
+        else:
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y,
+                test_size=test_size,
+                random_state=seed,
+                shuffle=shuffle
+            )
+            
+            # 转换为float32类型
+            X_train = X_train.astype('float32')
+            X_test = X_test.astype('float32')
+            
+            return (X_train, y_train), (X_test, y_test)
     
     except Exception as e:
         raise RuntimeError(f"数据加载失败: {str(e)}") from e
