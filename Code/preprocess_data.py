@@ -145,7 +145,7 @@ def extract_stable_dataset(output_file,dict_file,person,keep_last=1):
     data_folder = 'ProcessedData_overall'
     columns = ['Time in ms', 'flex1', 'flex2', 'flex3', 'flex4', 'flex5', 'flex6']
     
-    combined_dataset = pd.DataFrame(columns=columns)
+    combined_dataset = pd.DataFrame(columns=columns + ['Set'])
 
     grasp_labels = {}
 
@@ -169,6 +169,10 @@ def extract_stable_dataset(output_file,dict_file,person,keep_last=1):
                     else:
                         stationary_data = pd.DataFrame(stationary_data, columns=columns)
                         stationary_data["Labels"] = i
+                        if len(os.listdir(object_path)) - int(file.split('.')[0]) < 3:
+                            stationary_data["Set"] = 'test'
+                        else:
+                            stationary_data["Set"] = 'train'
                         combined_dataset = pd.concat([combined_dataset, stationary_data], ignore_index=True)
             
             else:
@@ -215,8 +219,8 @@ def plot_grasp(path,stationary_point=True):
     plt.show()
 
 
-extract_stable_dataset('Data/Stable_1.csv', 'Data/Stable_label_1.csv', 1, keep_last=1)
-extract_stable_dataset('Data/Stable_2.csv', 'Data/Stable_label_2.csv', 2, keep_last=1)
+extract_stable_dataset('Data/Stable_1.csv', 'Data/Stable_label_1.csv', 1, keep_last=5)
+extract_stable_dataset('Data/Stable_2.csv', 'Data/Stable_label_2.csv', 2, keep_last=5)
 
 #combine_data('Total_dataset.csv', 'grasp_labels_total.csv')
 

@@ -78,3 +78,43 @@ def load_data(
     
     except Exception as e:
         raise RuntimeError(f"数据加载失败: {str(e)}") from e
+    
+
+
+def load_split_data(
+    csv_path,
+    ):
+    """
+    加载并预处理数据集，返回适合Keras/TensorFlow的训练测试分割
+    
+    参数:
+        csv_path (str): CSV文件路径
+        label_columns (str/list): 标签列名，默认最后一列
+    返回:
+        tuple: ((X_train, y_train), (X_test, y_test))
+    
+    异常:
+        ValueError: 无效的任务类型或标签列错误
+    """
+    try:
+        # 读取数据
+        df = pd.read_csv(csv_path)
+
+        # 分离set
+        train_set = df[df['Set'] == 'train']
+        test_set = df[df['Set'] == 'test']
+        
+        # 分离特征和标签
+
+        y_train = train_set.iloc[:, -1].values
+        X_train = train_set.iloc[:, :-2].values
+        y_test = test_set.iloc[:, -1].values
+        X_test = test_set.iloc[:, :-2].values
+
+
+
+        return (X_train, y_train), (X_test, y_test)
+    
+    except Exception as e:
+        raise RuntimeError(f"数据加载失败: {str(e)}") from e
+    
