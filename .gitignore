@@ -6,6 +6,8 @@
 !/Code/
 !dataset/
 .venv
+real
+Website.zip
 
 # User-specific files
 *.rsuser
