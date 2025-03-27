@@ -4,4 +4,4 @@
 #### Duration: November 2024 - March 2025
 
 ### Project Overview 
-<iframe src="index.html" width="100%" height="600px"></iframe>
+#### [View Project Description](https://marshao0124.github.io/AML_LAB_Project/)
