@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Grasp Recognition Project Overview</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f9f9f9;
+            color: #2c3e50;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        .downloads a {
+            display: block;
+            margin-bottom: 8px;
+            color: #2980b9;
+        }
+        img {
+            max-width: 90%;
+            height: auto;
+            border: 1px solid #ccc;
+            padding: 4px;
+            background-color: #fff;
+            margin: 10px 0;
+        }
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .figure-half {
+            flex: 1;
+            min-width: 280px;
+            max-width: 48%;
+        }
+        .caption {
+            font-size: 0.9em;
+            text-align: center;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Grasp Recognition using Sensor Glove</h1>
+
+<p>This project presents a glove-based grasp recognition system using six flex sensors and machine learning. It captures hand movements and classifies eight grasp types, covering power and precision categories. A total of 720 grasp samples were collected from two participants using diverse everyday objects. Models were evaluated with Leave-One-Subject-Out Cross-Validation (LOSO-CV), and the CNN-biLSTM model showed the best generalization.</p>
+
+<div class="section">
+    <h2>System and Glove Design</h2>
+    <div class="row">
+        <div class="figure-half">
+            <img src="figures/other_side.jpg" alt="Top view of glove">
+            <div class="caption">Figure 1: Top view of glove with flex sensors on five fingers.</div>
+        </div>
+        <div class="figure-half">
+            <img src="figures/one_side.jpg" alt="Bottom view of glove">
+            <div class="caption">Figure 2: Bottom view of glove with thumb adduction sensor.</div>
+        </div>
+    </div>
+    <img src="figures/Circuit Design.png" alt="Circuit Diagram">
+    <div class="caption">Figure 3: Full circuit diagram showing sensor connections to Arduino Mega.</div>
+</div>
+
+<div class="section">
+    <h2>Data Collection and Taxonomy</h2>
+    <img src="figures/GRASP_taxonomy.png" alt="GRASP Taxonomy">
+    <div class="caption">Figure 4: GRASP taxonomy showing different types of human grasps.</div>
+    <img src="figures/all collection image.png" alt="Objects used">
+    <div class="caption">Figure 5: Everyday objects used in grasp data collection.</div>
+</div>
+
+<div class="section">
+    <h2>Model Architecture and Training</h2>
+    <p>
+        We explored two modeling strategies for classifying grasp types: a <strong>Sequential Approach</strong> and a <strong>Static Approach</strong>. 
+        The sequential models treat sensor signals as time series and capture dynamic patterns across a 10-step sliding window. 
+        In contrast, the static models classify grasp types based on stable posture points extracted from each sequence.
+    </p>
+    <p>
+        A total of five models were developed for comparison: three sequential models (1D CNN, LSTM, and CNN-biLSTM) and two static models (Support Vector Machine and Fully Connected Neural Network). 
+        Among them, the <strong>CNN-biLSTM</strong> hybrid model demonstrated the best performance and generalization.
+    </p>
+    <img src="figures/CNN-LSTM.png" alt="Model Architecture">
+    <div class="caption">Figure 6: Architecture of the hybrid CNN-BiLSTM model combining spatial feature extraction and bidirectional temporal modeling.</div>
+    <p>
+        To evaluate model generalization across individuals, we used a <strong>Leave-One-Subject-Out Cross-Validation </strong> strategy. 
+        With two participants, each model is trained on one participant's data and tested on the other's. This ensures the models are tested on entirely unseen users.
+    </p>
+    <img src="figures/LOSO.png" alt="LOSO Cross Validation">
+    <div class="caption">Figure 7: LOSO cross-validation strategy across two participants.</div>
+</div>
+
+
+<div class="section">
+    <h2>Results and Analysis</h2>
+    <p>
+        Our LOSO-CV results, visualized in the figure below, highlight the superior generalization ability of the CNN-biLSTM model. It consistently achieves the highest average accuracy with small error bars across grasp types, indicating robustness against individual variability and sensor drift. In comparison, standalone CNN and LSTM models show greater performance fluctuation, especially for grasps like <em>Fixed Hook</em> and <em>Sphere 4-Finger</em>, due to their limited capacity to jointly capture spatial and temporal features. Static models (SVM and NN) performed well on clearly defined postures but exhibited larger performance gaps across folds, suggesting reduced adaptability to ambiguous or transitional grasps. Overall, CNN-biLSTM offers the best trade-off between accuracy and generalization, making it highly suitable for real-world deployment in assistive and human-in-the-loop systems.
+    </p>
+    <img src="figures/resultDiscussion.png" alt="Accuracy Comparison">
+    <div class="caption">Figure 8: Per-class accuracy comparison with error bars across models.</div>
+</div>
+
+
+
+<div class="section downloads">
+    <h2>Downloads</h2>
+    <a href="report.pdf">Final Report (PDF)</a>
+    <a href="presentation.pptx">Presentation Slides</a>
+    <a href="video.mp4">Demo Video</a>
+    <a href="Code/">Source Code</a>
+    <a href="Dataset/">Dataset</a>
+</div>
+
+</body>
+</html>
