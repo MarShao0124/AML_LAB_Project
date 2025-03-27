@@ -36,7 +36,7 @@ ax = fig.add_subplot(111, projection='3d')
 # Plot the scatter plot with labels y_train
 for label in np.unique(y_train_2):
     indices = np.where(y_train_2 == label)
-    ax.scatter(X_train_second[indices, 0], X_train_second[indices, 1], X_train_second[indices, 2], 
+    ax.scatter(X_train[indices, 0], X_train[indices, 1], X_train[indices, 2], 
                c=label_colors[label], label=label_mapping[label], alpha=0.7)
 
 ax.set_xlabel('Principal Component 1')

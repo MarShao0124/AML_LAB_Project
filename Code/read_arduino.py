@@ -6,7 +6,7 @@ import numpy as np
 
 arduino = serial.Serial(port='COM4', baudrate=9600, timeout=1)
 model_path = 'Model/svm_model.pkl'
-label_path = 'grasp_labels_stable.csv'
+label_path = 'Data/Stable_label_1.csv'
 
 def load_model(model_path):
     if model_path.endswith('.pkl'):
